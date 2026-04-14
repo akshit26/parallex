@@ -8,13 +8,21 @@ gsap.registerPlugin(ScrollTrigger);
 
 export const useGsapContext = (
   scope: RefObject<HTMLElement>,
-  setup: () => void
+  setup: () => void | (() => void)
 ) => {
   useLayoutEffect(() => {
     if (!scope.current) return;
 
+    let cleanup: void | (() => void);
+
     // `gsap.context` scopes selectors/animations and handles teardown automatically.
-    const ctx = gsap.context(() => setup(), scope);
-    return () => ctx.revert();
+    const ctx = gsap.context(() => {
+      cleanup = setup();
+    }, scope);
+
+    return () => {
+      cleanup?.();
+      ctx.revert();
+    };
   }, [scope, setup]);
 };
